@@ -5,6 +5,7 @@ import zipfile
 import shutil
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from java_parser import JavaProjectParser
 from visualizer import (
     visualize_project_structure, visualize_api_calls, visualize_flow,
@@ -310,11 +311,16 @@ if uploaded_file is not None:
                 # Visualize API relationships
                 st.subheader("API Relationships")
                 api_fig = visualize_api_calls(project_data['apis'])
-                st.plotly_chart(api_fig, use_container_width=True)
                 
-                # Add export option for chart
-                st.markdown("#### Export API Visualization")
-                st.markdown(get_figure_download_link(api_fig, "api_relationships.html", "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
+                # Safety check before displaying
+                if api_fig and isinstance(api_fig, go.Figure):
+                    st.plotly_chart(api_fig, use_container_width=True)
+                    
+                    # Add export option for chart
+                    st.markdown("#### Export API Visualization")
+                    st.markdown(get_figure_download_link(api_fig, "api_relationships.html", "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
+                else:
+                    st.info("Unable to generate API visualization with the current data.")
             else:
                 st.info("No APIs were detected or API analysis was not selected.")
         
@@ -434,11 +440,16 @@ if uploaded_file is not None:
             
             if 'functions' in project_data and 'dependencies' in project_data:
                 class_diagram = generate_class_diagram(project_data['functions'], project_data['dependencies'])
-                st.plotly_chart(class_diagram, use_container_width=True)
                 
-                # Add export option
-                st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(class_diagram, "class_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                # Safety check before displaying
+                if class_diagram and isinstance(class_diagram, go.Figure):
+                    st.plotly_chart(class_diagram, use_container_width=True)
+                    
+                    # Add export option
+                    st.markdown("### Export Options")
+                    st.markdown(get_figure_download_link(class_diagram, "class_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                else:
+                    st.info("Unable to generate class diagram with the current data.")
             else:
                 st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
         
@@ -448,11 +459,16 @@ if uploaded_file is not None:
             
             if 'apis' in project_data and 'functions' in project_data:
                 sequence_diagram = generate_sequence_diagram(project_data['apis'], project_data['functions'])
-                st.plotly_chart(sequence_diagram, use_container_width=True)
                 
-                # Add export option
-                st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(sequence_diagram, "sequence_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                # Safety check before displaying
+                if sequence_diagram and isinstance(sequence_diagram, go.Figure):
+                    st.plotly_chart(sequence_diagram, use_container_width=True)
+                    
+                    # Add export option
+                    st.markdown("### Export Options")
+                    st.markdown(get_figure_download_link(sequence_diagram, "sequence_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                else:
+                    st.info("Unable to generate sequence diagram with the current data.")
             else:
                 st.info("Insufficient data to generate sequence diagram. Ensure APIs and functions are available.")
         
@@ -466,11 +482,16 @@ if uploaded_file is not None:
                     project_data.get('functions', {}), 
                     project_data.get('batch_processes', [])
                 )
-                st.plotly_chart(functional_flow, use_container_width=True)
+                # Safety check before displaying
+                if functional_flow and isinstance(functional_flow, go.Figure):
+                    st.plotly_chart(functional_flow, use_container_width=True)
+                else:
+                    st.info("Unable to generate functional flow diagram with the current data.")
                 
-                # Add export option
-                st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(functional_flow, "functional_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                # Add export option only if we have a valid figure
+                if functional_flow and isinstance(functional_flow, go.Figure):
+                    st.markdown("### Export Options")
+                    st.markdown(get_figure_download_link(functional_flow, "functional_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("Insufficient data to generate functional flow diagram.")
         
