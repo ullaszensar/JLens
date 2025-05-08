@@ -234,309 +234,215 @@ def visualize_api_calls(apis):
 
 def visualize_flow(dependencies):
     """
-    Visualizes the flow and dependencies between classes in a UML-style flow diagram.
+    Visualizes the logical flow and dependencies between classes using a flow diagram.
     
     Args:
         dependencies (dict): Dictionary of class dependencies.
         
     Returns:
-        go.Figure: A Plotly figure representing the project flow in UML format.
+        go.Figure: A Plotly figure representing the project's logical flow.
     """
     if not dependencies:
         return go.Figure()
     
-    import numpy as np
-    
     # Create a directed graph
     G = nx.DiGraph()
     
-    # Group nodes by package for better organization
+    # Group nodes by package
     packages = {}
     
-    # Extract the major components based on package structure
-    components = {}
-    
-    # Add nodes and identify components
+    # Add nodes and edges from dependencies
     for class_name, deps in dependencies.items():
-        # Try to extract package from class name (assuming Java package convention)
+        # Try to extract package info
         parts = class_name.split('.')
-        if len(parts) > 1:
-            package = '.'.join(parts[:-1])
-            # Extract main component (first part of package)
-            component = parts[0] if parts else 'default'
-        else:
-            package = 'default'
-            component = 'default'
-            
-        # Group by package
+        package = '.'.join(parts[:-1]) if len(parts) > 1 else 'default'
+        
+        # Track packages for better visualization
         if package not in packages:
             packages[package] = []
         packages[package].append(class_name)
         
-        # Group by component
-        if component not in components:
-            components[component] = []
-        components[component].append(class_name)
+        # Add the class as a node with package info
+        G.add_node(class_name, package=package)
         
-        # Add node to graph with attributes
-        G.add_node(class_name, package=package, component=component)
-        
-    # Add edges for dependencies (using only the major ones for clarity)
-    for class_name, deps in dependencies.items():
-        # Add 'extends' relationships as primary
+        # Add inheritance and implementation edges with special types
         if 'extends' in deps and deps['extends']:
             G.add_edge(class_name, deps['extends'], relationship='extends')
-            
-        # Add 'implements' relationships
+        
         if 'implements' in deps:
             for interface in deps['implements']:
                 G.add_edge(class_name, interface, relationship='implements')
         
-        # Add key 'uses' relationships (limit to avoid cluttering)
-        if 'uses' in deps:
-            # Focus on relationships within same component for cleaner diagram
-            same_component_uses = []
-            for used_class in deps['uses']:
-                # Get component for the used class
-                used_parts = used_class.split('.')
-                used_component = used_parts[0] if len(used_parts) > 1 else 'default'
+        # Add dependencies as standard edges
+        for used_class in deps.get('uses', []):
+            # Skip edges already created by extends/implements
+            if 'extends' in deps and used_class == deps['extends']:
+                continue
+            if 'implements' in deps and used_class in deps['implements']:
+                continue
                 
-                # Check if the class is in graph (may not be if filtered)
-                if class_name in G.nodes:
-                    class_component = G.nodes[class_name].get('component', 'default')
-                    # Add to the same component list if they match
-                    if used_component == class_component:
-                        same_component_uses.append(used_class)
-            
-            # Use same component relationships if available, otherwise take a subset
-            subset_uses = same_component_uses if same_component_uses else deps['uses'][:3]
-            for used_class in subset_uses:
-                G.add_edge(class_name, used_class, relationship='uses')
+            G.add_edge(class_name, used_class, relationship='uses')
     
-    # Try to use hierarchical layout for a more UML-like appearance
+    # Try to use a hierarchical layout for better flow visualization
     try:
-        # Use Graphviz for better layout
-        pos = nx.nx_agraph.graphviz_layout(G, prog='dot', args='-Grankdir=TB')
-    except Exception:
-        # Fall back to a hierarchical layout approximation
-        pos = nx.spring_layout(G, k=0.5, iterations=100, seed=42)
+        # Try to use graphviz's dot algorithm for a top-down view
+        pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+    except:
+        # Fallback to spring layout with some tuning
+        pos = nx.spring_layout(G, k=0.3, iterations=50, seed=42)
     
-    # Create the UML-style flow diagram
-    fig = go.Figure()
+    # Create edge traces with different colors/styles by relationship type
+    edge_traces = []
     
-    # If the graph is empty or no positions available, return empty figure
-    if not pos or len(pos) == 0:
-        return go.Figure()
+    # Track which relationship types we've added for legend purposes
+    relationship_types = set()
     
-    # Normalize positions
-    pos_array = np.array(list(pos.values()))
-    min_x, min_y = pos_array.min(axis=0)
-    max_x, max_y = pos_array.max(axis=0)
-    width = max_x - min_x if max_x > min_x else 1.0
-    height = max_y - min_y if max_y > min_y else 1.0
-    
-    # Draw component boxes first (as containers)
-    component_bounds = {}
-    component_colors = {
-        'controller': 'rgba(220, 240, 255, 0.3)',
-        'service': 'rgba(255, 240, 220, 0.3)',
-        'repository': 'rgba(220, 255, 220, 0.3)',
-        'model': 'rgba(240, 220, 255, 0.3)',
-        'default': 'rgba(240, 240, 240, 0.3)'
-    }
-    
-    # Calculate bounds for each component
-    for component, classes in components.items():
-        # Skip if no classes with positions
-        valid_classes = [c for c in classes if c in pos]
-        if not valid_classes:
+    for edge in G.edges(data=True):
+        source, target, data = edge
+        if source not in pos or target not in pos:  # Skip if nodes don't have positions
             continue
             
-        # Find bounds
-        x_positions = [pos[c][0] for c in valid_classes]
-        y_positions = [pos[c][1] for c in valid_classes]
-        
-        if not x_positions or not y_positions:
-            continue
-            
-        # Calculate bounds with padding
-        min_comp_x = min(x_positions)
-        max_comp_x = max(x_positions)
-        min_comp_y = min(y_positions)
-        max_comp_y = max(y_positions)
-        
-        # Add padding
-        padding = 50
-        min_comp_x -= padding
-        max_comp_x += padding
-        min_comp_y -= padding
-        max_comp_y += padding
-        
-        component_bounds[component] = (min_comp_x, min_comp_y, max_comp_x, max_comp_y)
-    
-    # Normalize and draw component boxes
-    for component, bounds in component_bounds.items():
-        min_comp_x, min_comp_y, max_comp_x, max_comp_y = bounds
-        
-        # Normalize to 0-1 range
-        x0 = (min_comp_x - min_x) / width
-        y0 = (min_comp_y - min_y) / height
-        x1 = (max_comp_x - min_x) / width
-        y1 = (max_comp_y - min_y) / height
-        
-        # Determine color based on component name keywords
-        color = component_colors['default']
-        component_lower = component.lower()
-        for key in component_colors:
-            if key in component_lower:
-                color = component_colors[key]
-                break
-        
-        # Draw the component box with dashed line
-        fig.add_shape(
-            type="rect",
-            x0=x0, y0=y0, x1=x1, y1=y1,
-            line=dict(color="gray", width=1, dash="dash"),
-            fillcolor=color,
-            layer="below"
-        )
-        
-        # Add component label
-        fig.add_annotation(
-            x=(x0 + x1) / 2,
-            y=y0 + 0.02,
-            text=f"<b>{component}</b>",
-            showarrow=False,
-            font=dict(size=12),
-            xref="paper",
-            yref="paper"
-        )
-    
-    # Draw relationship arrows with proper UML notation
-    for source, target, data in G.edges(data=True):
-        if source not in pos or target not in pos:
-            continue
-            
-        # Get positions
         x0, y0 = pos[source]
         x1, y1 = pos[target]
         
-        # Normalize to 0-1 range
-        x0_norm = (x0 - min_x) / width
-        y0_norm = (y0 - min_y) / height
-        x1_norm = (x1 - min_x) / width
-        y1_norm = (y1 - min_y) / height
-        
         # Get relationship type
         relationship = data.get('relationship', 'uses')
+        relationship_types.add(relationship)
         
-        # Style based on relationship type
+        # Choose style based on relationship type
         if relationship == 'extends':
-            line_style = dict(color='black', width=2)
-            arrow_style = "triangle-up" 
+            edge_color = 'rgba(255, 0, 0, 0.6)'  # Red for inheritance
+            width = 2
+            dash = None
         elif relationship == 'implements':
-            line_style = dict(color='black', width=1.5, dash='dash')
-            arrow_style = "triangle-up"
+            edge_color = 'rgba(0, 0, 255, 0.6)'  # Blue for implementation 
+            width = 2
+            dash = 'dash'
         else:  # uses
-            line_style = dict(color='gray', width=1)
-            arrow_style = "arrow"
+            edge_color = 'rgba(128, 128, 128, 0.6)'  # Gray for usage
+            width = 1
+            dash = None
         
-        # Draw the relationship line
-        fig.add_trace(go.Scatter(
-            x=[x0_norm, x1_norm],
-            y=[y0_norm, y1_norm],
-            mode='lines',
-            line=line_style,
+        # Create custom arrow shapes using scatter with markers
+        # Draw line
+        edge_trace = go.Scatter(
+            x=[x0, x1, None],
+            y=[y0, y1, None],
+            line=dict(width=width, color=edge_color, dash=dash),
             hoverinfo='text',
             text=f"{source.split('.')[-1]} {relationship} {target.split('.')[-1]}",
-            showlegend=False
-        ))
+            mode='lines',
+            showlegend=relationship not in relationship_types,
+            name=relationship.capitalize())
+        
+        edge_traces.append(edge_trace)
+        
+        # Mark the relationship as added for legend purposes
+        relationship_types.discard(relationship)
     
-    # Draw class boxes
-    for class_name, node_data in G.nodes(data=True):
-        if class_name not in pos:
-            continue
-            
-        x, y = pos[class_name]
-        
-        # Normalize to 0-1 range
-        x_norm = (x - min_x) / width
-        y_norm = (y - min_y) / height
-        
-        # Get short class name for display
-        short_name = class_name.split('.')[-1]
-        
-        # Create appropriate color and style based on class type/name
-        if 'Interface' in short_name or short_name.endswith('able'):
-            color = 'rgba(200, 230, 255, 0.9)'  # Interface - light blue
-        elif 'Controller' in short_name:
-            color = 'rgba(255, 220, 220, 0.9)'  # Controller - light red
-        elif 'Service' in short_name:
-            color = 'rgba(255, 255, 200, 0.9)'  # Service - light yellow
-        elif 'Repository' in short_name or 'DAO' in short_name:
-            color = 'rgba(220, 255, 220, 0.9)'  # Repository - light green
-        elif 'Model' in short_name or 'Entity' in short_name or 'DTO' in short_name:
-            color = 'rgba(240, 220, 255, 0.9)'  # Model - light purple
-        else:
-            color = 'rgba(240, 240, 240, 0.9)'  # Default - light gray
-        
-        # Draw class box
-        box_width = 0.04
-        box_height = 0.025
-        
-        # Draw the box
-        fig.add_shape(
-            type="rect",
-            x0=x_norm - box_width/2,
-            y0=y_norm - box_height/2,
-            x1=x_norm + box_width/2,
-            y1=y_norm + box_height/2,
-            line=dict(color="black", width=1),
-            fillcolor=color
-        )
-        
-        # Add class name label
-        fig.add_annotation(
-            x=x_norm,
-            y=y_norm,
-            text=short_name,
-            showarrow=False,
-            font=dict(size=8),
-            xref="paper",
-            yref="paper"
-        )
+    # Assign colors to packages for better grouping
+    package_colors = {}
+    colorscale = px.colors.qualitative.Pastel
+    for i, package in enumerate(packages.keys()):
+        package_colors[package] = colorscale[i % len(colorscale)]
     
-    # Add legend for relationship types
-    fig.update_layout(
-        title=dict(text='UML Flow Diagram', font=dict(size=18)),
-        showlegend=False,
-        plot_bgcolor='rgba(255, 255, 255, 1)',
-        margin=dict(b=20, l=20, r=20, t=50),
-        xaxis=dict(
-            showgrid=False, 
-            zeroline=False, 
-            showticklabels=False,
-            constrain="domain"
-        ),
-        yaxis=dict(
-            showgrid=False, 
-            zeroline=False, 
-            showticklabels=False,
-            scaleanchor="x", 
-            scaleratio=1  # Keep aspect ratio to avoid distortion
-        ),
-        annotations=[
-            dict(
-                x=0.5,
-                y=-0.05,
-                xref="paper",
-                yref="paper",
-                text="Relationship types: —▲ Inheritance, ---▲ Implementation, → Uses",
-                showarrow=False,
-                font=dict(size=10)
-            )
-        ]
-    )
+    # Create node traces for each package
+    node_traces = []
+    for package, nodes in packages.items():
+        node_x = []
+        node_y = []
+        node_text = []
+        node_color = []
+        node_size = []
+        
+        for node in nodes:
+            if node in pos:  # Check if position exists
+                x, y = pos[node]
+                node_x.append(x)
+                node_y.append(y)
+                
+                # Determine node color, size and shape based on class type
+                short_name = node.split('.')[-1]
+                
+                if 'Controller' in short_name:
+                    node_type = 'Controller'
+                    node_size.append(15)
+                elif 'Service' in short_name:
+                    node_type = 'Service'
+                    node_size.append(12)
+                elif 'Repository' in short_name or 'DAO' in short_name:
+                    node_type = 'Repository'
+                    node_size.append(12)
+                elif 'Model' in short_name or 'DTO' in short_name or 'Entity' in short_name:
+                    node_type = 'Model'
+                    node_size.append(10)
+                elif 'Interface' in short_name or short_name.endswith('able'):
+                    node_type = 'Interface'
+                    node_size.append(10)
+                else:
+                    node_type = 'Class'
+                    node_size.append(10)
+                
+                # Create descriptive hover text
+                hover_text = f"<b>{short_name}</b><br>Type: {node_type}<br>Package: {package}"
+                
+                # Add class methods if present in the dependencies
+                if node in dependencies and 'methods' in dependencies[node]:
+                    methods = dependencies[node]['methods']
+                    if methods:
+                        hover_text += f"<br>Methods: {', '.join(methods[:3])}"
+                        if len(methods) > 3:
+                            hover_text += f" (+{len(methods)-3} more)"
+                
+                node_text.append(hover_text)
+                node_color.append(package_colors[package])
+        
+        # Create a node trace for this package
+        node_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode='markers+text',
+            hoverinfo='text',
+            text=[n.split('.')[-1] for n in nodes if n in pos],  # Display short class names
+            textposition='bottom center',
+            hovertext=node_text,
+            marker=dict(
+                color=node_color,
+                size=node_size,
+                line_width=1,
+                line=dict(color='black')),
+            name=package,
+            showlegend=True,
+            textfont=dict(size=8))
+        
+        node_traces.append(node_trace)
+    
+    # Create figure with all traces
+    fig = go.Figure(data=edge_traces + node_traces,
+                 layout=go.Layout(
+                    title=dict(text='Logical Flow Diagram', font=dict(size=18)),
+                    showlegend=True,
+                    legend=dict(
+                        title="Components & Relationships",
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ),
+                    hovermode='closest',
+                    margin=dict(b=20, l=5, r=5, t=40),
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    annotations=[
+                        dict(
+                            text="Node colors represent packages; sizes represent importance in architecture",
+                            showarrow=False,
+                            xref="paper", yref="paper",
+                            x=0.5, y=-0.1,
+                            font=dict(size=10)
+                        )
+                    ]
+                 ))
     
     return fig
 

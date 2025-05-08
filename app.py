@@ -123,8 +123,8 @@ if uploaded_file is not None:
             "APIs", 
             "Functions", 
             "Batch Processes",
-            "Project Flow",
-            "Class Diagram",
+            "Logical Flow",
+            "UML Class Diagram",
             "Sequence Diagram",
             "Functional Flow"
         ])
