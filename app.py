@@ -3,6 +3,7 @@ import os
 import tempfile
 import zipfile
 import shutil
+import pandas as pd
 from java_parser import JavaProjectParser
 from visualizer import visualize_project_structure, visualize_api_calls, visualize_flow
 from utils import create_data_tables, get_file_content
@@ -83,14 +84,166 @@ if uploaded_file is not None:
         with tab1:
             st.header("Project Structure")
             
-            # Display project structure as a tree
-            structure_fig = visualize_project_structure(project_data['structure'])
-            st.plotly_chart(structure_fig, use_container_width=True)
+            # Create subtabs for different structure views
+            struct_tab1, struct_tab2, struct_tab3, struct_tab4 = st.tabs([
+                "Hierarchical View", 
+                "Files Distribution", 
+                "MVC Components",
+                "Dependencies"
+            ])
             
-            # Display files count by type
-            st.subheader("Files Distribution")
-            files_by_type = project_data['file_types_count']
-            st.bar_chart(files_by_type)
+            # Tab 1.1: Hierarchical Directory Tree View
+            with struct_tab1:
+                st.subheader("Directory Tree View")
+                # Display project structure as a tree
+                structure_fig = visualize_project_structure(project_data['structure'])
+                st.plotly_chart(structure_fig, use_container_width=True)
+                
+                # Also display the structure as a text tree for easier reading
+                st.subheader("Directory Text Tree")
+                
+                # Function to build a text tree representation
+                def build_text_tree(node, indent="", is_last=True):
+                    # Get the node name
+                    node_name = node.get('name', '')
+                    
+                    # Determine branch connector based on whether this is the last item
+                    branch = "└── " if is_last else "├── "
+                    
+                    # Create the line for this node
+                    line = f"{indent}{branch}{node_name}"
+                    
+                    # Add node type indicator if available
+                    if 'type' in node and node['type'] == 'file':
+                        if node_name.endswith('.java'):
+                            line += " [Java]"
+                    
+                    text_tree = [line]
+                    
+                    # Continue building tree if there are children
+                    if 'children' in node and node['children']:
+                        # Update indent for children
+                        child_indent = indent + ("    " if is_last else "│   ")
+                        
+                        # Process children
+                        children = node['children']
+                        for i, child in enumerate(children):
+                            is_child_last = (i == len(children) - 1)
+                            text_tree.extend(build_text_tree(child, child_indent, is_child_last))
+                    
+                    return text_tree
+                
+                # Create text tree representation
+                if 'structure' in project_data:
+                    text_tree_lines = build_text_tree(project_data['structure'])
+                    
+                    # Display the text tree in a code block
+                    st.code('\n'.join(text_tree_lines), language=None)
+            
+            # Tab 1.2: Files Distribution
+            with struct_tab2:
+                st.subheader("Files Distribution")
+                files_by_type = project_data['file_types_count']
+                
+                # Display as a bar chart
+                st.bar_chart(files_by_type)
+                
+                # Also display the raw counts
+                st.dataframe(pd.DataFrame({
+                    'File Type': files_by_type.index,
+                    'Count': files_by_type.values
+                }))
+            
+            # Tab 1.3: MVC Structure (Controllers, Services, DAOs)
+            with struct_tab3:
+                st.subheader("MVC Components")
+                
+                # Extract Controllers, Services, DAOs from functions
+                controllers = []
+                services = []
+                daos = []
+                
+                for class_name, methods in project_data.get('functions', {}).items():
+                    # Check if the class is a controller, service, or DAO
+                    if 'Controller' in class_name:
+                        controllers.append({
+                            'Class Name': class_name,
+                            'Methods Count': len(methods),
+                            'File': methods[0]['file'] if methods else "Unknown"
+                        })
+                    elif 'Service' in class_name:
+                        services.append({
+                            'Class Name': class_name,
+                            'Methods Count': len(methods),
+                            'File': methods[0]['file'] if methods else "Unknown"
+                        })
+                    elif 'DAO' in class_name or 'Repository' in class_name:
+                        daos.append({
+                            'Class Name': class_name,
+                            'Methods Count': len(methods),
+                            'File': methods[0]['file'] if methods else "Unknown"
+                        })
+                
+                # Create expandable sections for each component
+                with st.expander("Controllers", expanded=True):
+                    if controllers:
+                        st.dataframe(pd.DataFrame(controllers))
+                    else:
+                        st.info("No Controllers found in the project.")
+                
+                with st.expander("Services", expanded=True):
+                    if services:
+                        st.dataframe(pd.DataFrame(services))
+                    else:
+                        st.info("No Services found in the project.")
+                
+                with st.expander("DAOs / Repositories", expanded=True):
+                    if daos:
+                        st.dataframe(pd.DataFrame(daos))
+                    else:
+                        st.info("No DAOs or Repositories found in the project.")
+                
+                # Also add entities if available
+                entities = []
+                for class_name, methods in project_data.get('functions', {}).items():
+                    if 'Entity' in class_name or 'Model' in class_name or 'DTO' in class_name:
+                        entities.append({
+                            'Class Name': class_name,
+                            'Fields/Methods Count': len(methods),
+                            'File': methods[0]['file'] if methods else "Unknown"
+                        })
+                
+                with st.expander("Entities / Models", expanded=True):
+                    if entities:
+                        st.dataframe(pd.DataFrame(entities))
+                    else:
+                        st.info("No Entities or Models found in the project.")
+            
+            # Tab 1.4: Dependencies
+            with struct_tab4:
+                st.subheader("Project Dependencies")
+                
+                # Extract dependencies from pom.xml or build.gradle if available
+                st.text("Project Dependencies from configuration files:")
+                
+                # Find and extract dependencies from project files
+                dependencies_found = False
+                for java_file in project_data.get('java_files', []):
+                    if 'pom.xml' in java_file:
+                        dependencies_found = True
+                        file_path = os.path.join(extract_dir, java_file)
+                        content = get_file_content(file_path)
+                        st.code(content, language="xml")
+                        break
+                    elif 'build.gradle' in java_file:
+                        dependencies_found = True
+                        file_path = os.path.join(extract_dir, java_file)
+                        content = get_file_content(file_path)
+                        st.code(content, language="gradle")
+                        break
+                
+                if not dependencies_found:
+                    st.info("No dependency files (pom.xml or build.gradle) found in the project.")
         
         # Tab 2: APIs
         with tab2:
@@ -153,21 +306,8 @@ if uploaded_file is not None:
             else:
                 st.info("Project flow visualization was not selected or no dependencies were detected.")
         
-        # File Explorer section
-        st.header("File Explorer")
-        
-        # Create a list of all Java files for selection
-        if 'java_files' in project_data:
-            java_files = project_data['java_files']
-            selected_file = st.selectbox("Select a file to view its content:", java_files)
-            
-            if selected_file:
-                file_path = os.path.join(extract_dir, selected_file)
-                
-                # Display file content with syntax highlighting
-                st.subheader(f"Content of {selected_file}")
-                content = get_file_content(file_path)
-                st.code(content, language="java")
+        # Progress is complete
+        # File Explorer section has been removed as per user request
         
         progress_bar.progress(100)
         status_text.text("Analysis completed!")
