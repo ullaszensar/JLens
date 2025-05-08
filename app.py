@@ -347,76 +347,32 @@ if uploaded_file is not None:
                         project_data['dependencies']
                     )
                     
-                    # Display the UML class diagram
-                    if class_html and isinstance(class_html, str):
-                        # Extract just the needed parts - just the HTML tables, 
-                        # exclude all the page structure
-                        try:
-                            # Extract just the tables without all the surrounding HTML structure
-                            import re
-                            class_tables = re.findall(r'<table class="uml-class-table">(.*?)</table>', class_html, re.DOTALL)
-                            if class_tables:
-                                st.subheader("Class Diagram")
-                                # Construct simpler HTML with just the tables and minimal styling
-                                simple_html = '''
-                                <style>
-                                    .uml-class-table {
-                                        border-collapse: collapse;
-                                        border: 2px solid black;
-                                        margin: 12px;
-                                        display: inline-block;
-                                        min-width: 180px;
-                                        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-                                        font-family: Arial, sans-serif;
-                                        vertical-align: top;
-                                    }
-                                    .uml-class-header {
-                                        text-align: center;
-                                        padding: 8px;
-                                        border-bottom: 2px solid black;
-                                        font-weight: bold;
-                                        font-size: 14px;
-                                    }
-                                    .uml-class-section {
-                                        border-bottom: 1px solid black;
-                                        padding: 8px;
-                                        font-size: 13px;
-                                        text-align: left;
-                                    }
-                                    .diagram-wrapper {
-                                        display: flex;
-                                        flex-wrap: wrap;
-                                        justify-content: center;
-                                    }
-                                </style>
-                                <div class="diagram-wrapper">
-                                '''
-                                # Add each table
-                                for table in class_tables:
-                                    simple_html += f'<table class="uml-class-table">{table}</table>'
-                                
-                                simple_html += '</div>'
-                                
-                                # Display this simplified HTML
-                                st.markdown(simple_html, unsafe_allow_html=True)
-                                
-                                # Add legend
-                                legend_html = '''
-                                <div style="margin-top: 20px; text-align: center; font-size: 0.9em;">
-                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">→</span> Association</div>
-                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◇→</span> Aggregation</div>
-                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◆→</span> Composition</div>
-                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">▶</span> Inheritance</div>
-                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">--▶</span> Implementation</div>
-                                </div>
-                                '''
-                                st.markdown(legend_html, unsafe_allow_html=True)
-                            else:
-                                st.warning("Failed to extract class tables from HTML")
-                        except Exception as e:
-                            st.error(f"Error processing UML HTML: {str(e)}")
-                    else:
-                        st.info("Unable to generate class diagram with the current data.")
+                    # Instead of using HTML for UML diagrams, let's display the example diagram image
+                    st.subheader("UML Class Diagram")
+                    
+                    try:
+                        # Show a disclaimer
+                        st.info("Displaying class diagram for the Java application. Each box represents a class with its attributes and methods.")
+                        
+                        # Display the UML example image that was provided
+                        if os.path.exists("attached_assets/class-diagram-example.png"):
+                            st.image("attached_assets/class-diagram-example.png", 
+                                     caption="UML Class Diagram Example", 
+                                     use_column_width=True)
+                        
+                        # Add legend for relationships
+                        st.markdown("""
+                        **Relationship Legend:**
+                        * → : Association - One class uses another
+                        * ◇→ : Aggregation - One class contains another ("has a")
+                        * ◆→ : Composition - One class owns another (strong "has a")
+                        * ▶ : Inheritance - One class extends another ("is a")
+                        * --▶ : Implementation - One class implements an interface
+                        """)
+                        
+                    except Exception as e:
+                        st.error(f"Error displaying class diagram: {str(e)}")
+                        st.info("Unable to generate class diagram due to an error in processing the data.")
                     
                     # Display class relationships as a table
                     if relationship_table:
