@@ -338,109 +338,105 @@ if uploaded_file is not None:
         with tab3:
             st.header("Classes and Methods")
             
-            # Create subtabs for UML diagram and method list
-            class_tab1, class_tab2 = st.tabs(["UML Class Diagram", "Methods List"])
-            
-            # Tab 3.1: UML Class Diagram
-            with class_tab1:
-                st.subheader("UML Class Diagram")
-                
-                if 'functions' in project_data and 'dependencies' in project_data:
-                    try:
-                        # Generate HTML-based UML class diagram
-                        class_html, relationship_table = generate_class_diagram_html(
-                            project_data['functions'], 
-                            project_data['dependencies']
-                        )
-                        
-                        # Display the HTML class diagram
-                        if class_html and isinstance(class_html, str):
-                            st.markdown(class_html, unsafe_allow_html=True)
-                        else:
-                            st.info("Unable to generate class diagram with the current data.")
-                        
-                        # Display class relationships as a table
-                        if relationship_table:
-                            st.subheader("Class Relationships")
-                            
-                            # Convert relationship data to DataFrame for better display
-                            rel_data = []
-                            for row in relationship_table:
-                                parts = row.split("|")
-                                if len(parts) >= 5:  # Should have 5 parts with empty first/last
-                                    rel_data.append({
-                                        "Source Class": parts[1].strip(),
-                                        "Relationship Type": parts[2].strip(),
-                                        "Target Class": parts[3].strip(),
-                                        "Description": parts[4].strip()
-                                    })
-                            
-                            if rel_data:
-                                rel_df = pd.DataFrame(rel_data)
-                                st.dataframe(rel_df, use_container_width=True)
-                                
-                                # Add export option
-                                st.markdown(get_csv_download_link(rel_df, "class_relationships.csv", 
-                                           "💾 Download relationships as CSV"), unsafe_allow_html=True)
+            # First show class diagram directly
+            if 'functions' in project_data and 'dependencies' in project_data:
+                try:
+                    # Generate HTML-based UML class diagram
+                    class_html, relationship_table = generate_class_diagram_html(
+                        project_data['functions'], 
+                        project_data['dependencies']
+                    )
                     
-                    except Exception as e:
-                        st.error(f"Error generating class diagram: {str(e)}")
-                        st.info("Unable to generate class diagram due to an error in processing the data.")
-                else:
-                    st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
-            
-            # Tab 3.2: Methods List
-            with class_tab2:
-                st.subheader("Methods List")
-                
-                if analyze_functions and 'functions' in project_data and project_data['functions']:
-                    # Create filter for class selection
-                    classes = list(project_data['functions'].keys())
-                    selected_class = st.selectbox("Select a class to view its methods:", ["All Classes"] + classes)
-                    
-                    # Prepare data for table view
-                    all_methods = []
-                    
-                    if selected_class == "All Classes":
-                        # Show methods from all classes
-                        for class_name, methods in project_data['functions'].items():
-                            for method in methods:
-                                all_methods.append({
-                                    'Class': class_name,
-                                    'Method': method['name'],
-                                    'Return Type': method['return_type'],
-                                    'Parameters': ', '.join(method['parameters']) if method['parameters'] else 'None',
-                                    'File': os.path.basename(method['file'])
-                                })
+                    # Display the HTML class diagram
+                    if class_html and isinstance(class_html, str):
+                        st.markdown(class_html, unsafe_allow_html=True)
                     else:
-                        # Show methods from selected class only
-                        methods = project_data['functions'].get(selected_class, [])
+                        st.info("Unable to generate class diagram with the current data.")
+                    
+                    # Display class relationships as a table
+                    if relationship_table:
+                        st.subheader("Class Relationships")
+                        
+                        # Convert relationship data to DataFrame for better display
+                        rel_data = []
+                        for row in relationship_table:
+                            parts = row.split("|")
+                            if len(parts) >= 5:  # Should have 5 parts with empty first/last
+                                rel_data.append({
+                                    "Source Class": parts[1].strip(),
+                                    "Relationship Type": parts[2].strip(),
+                                    "Target Class": parts[3].strip(),
+                                    "Description": parts[4].strip()
+                                })
+                        
+                        if rel_data:
+                            rel_df = pd.DataFrame(rel_data)
+                            st.dataframe(rel_df, use_container_width=True)
+                            
+                            # Add export option
+                            st.markdown(get_csv_download_link(rel_df, "class_relationships.csv", 
+                                        "💾 Download relationships as CSV"), unsafe_allow_html=True)
+                
+                except Exception as e:
+                    st.error(f"Error generating class diagram: {str(e)}")
+                    st.info("Unable to generate class diagram due to an error in processing the data.")
+            else:
+                st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
+            
+            # Add a separator between class diagram and methods list
+            st.markdown("---")
+            
+            # Methods List
+            st.subheader("Methods List")
+            
+            if analyze_functions and 'functions' in project_data and project_data['functions']:
+                # Create filter for class selection
+                classes = list(project_data['functions'].keys())
+                selected_class = st.selectbox("Select a class to view its methods:", ["All Classes"] + classes)
+                
+                # Prepare data for table view
+                all_methods = []
+                
+                if selected_class == "All Classes":
+                    # Show methods from all classes
+                    for class_name, methods in project_data['functions'].items():
                         for method in methods:
                             all_methods.append({
-                                'Class': selected_class,
+                                'Class': class_name,
                                 'Method': method['name'],
                                 'Return Type': method['return_type'],
                                 'Parameters': ', '.join(method['parameters']) if method['parameters'] else 'None',
                                 'File': os.path.basename(method['file'])
                             })
-                    
-                    # Create and display the methods table
-                    if all_methods:
-                        methods_df = pd.DataFrame(all_methods)
-                        st.dataframe(methods_df, use_container_width=True)
-                        
-                        # Add export options
-                        st.markdown("#### Export Function Data")
-                        st.markdown(get_csv_download_link(methods_df, f"functions_{selected_class.replace(' ', '_')}.csv", 
-                                    "💾 Download functions as CSV"), unsafe_allow_html=True)
-                        
-                        if selected_class == "All Classes":
-                            st.markdown(get_json_download_link(project_data['functions'], "all_functions.json", 
-                                        "💾 Download all functions as JSON"), unsafe_allow_html=True)
-                    else:
-                        st.info(f"No methods found for {selected_class}.")
                 else:
-                    st.info("No functions were detected or function analysis was not selected.")
+                    # Show methods from selected class only
+                    methods = project_data['functions'].get(selected_class, [])
+                    for method in methods:
+                        all_methods.append({
+                            'Class': selected_class,
+                            'Method': method['name'],
+                            'Return Type': method['return_type'],
+                            'Parameters': ', '.join(method['parameters']) if method['parameters'] else 'None',
+                            'File': os.path.basename(method['file'])
+                        })
+                
+                # Create and display the methods table
+                if all_methods:
+                    methods_df = pd.DataFrame(all_methods)
+                    st.dataframe(methods_df, use_container_width=True)
+                    
+                    # Add export options
+                    st.markdown("#### Export Function Data")
+                    st.markdown(get_csv_download_link(methods_df, f"functions_{selected_class.replace(' ', '_')}.csv", 
+                                "💾 Download functions as CSV"), unsafe_allow_html=True)
+                    
+                    if selected_class == "All Classes":
+                        st.markdown(get_json_download_link(project_data['functions'], "all_functions.json", 
+                                    "💾 Download all functions as JSON"), unsafe_allow_html=True)
+                else:
+                    st.info(f"No methods found for {selected_class}.")
+            else:
+                st.info("No functions were detected or function analysis was not selected.")
         
         # Tab 4: Batch Processes
         with tab4:
