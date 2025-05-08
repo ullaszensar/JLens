@@ -119,13 +119,11 @@ if uploaded_file is not None:
         st.markdown("---")
         
         # Create tabs for different analyses
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
             "Project Structure", 
             "APIs", 
             "Functions", 
             "Batch Processes",
-            "Logical Flow",
-            "UML Class Diagram",
             "Sequence Diagram",
             "Functional Flow"
         ])
@@ -446,100 +444,6 @@ if uploaded_file is not None:
         
         # Tab 5: Project Flow
         with tab5:
-            st.header("Project Flow Visualization")
-            
-            if analyze_flow and 'dependencies' in project_data:
-                flow_fig = visualize_flow(project_data['dependencies'])
-                
-                # Safety check before displaying
-                if flow_fig and isinstance(flow_fig, go.Figure):
-                    st.plotly_chart(flow_fig, use_container_width=True)
-                    
-                    # Add export option
-                    st.markdown("### Export Options")
-                    st.markdown(get_figure_download_link(flow_fig, "project_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
-                else:
-                    st.info("Unable to generate project flow visualization with the current data.")
-            else:
-                st.info("Project flow visualization was not selected or no dependencies were detected.")
-        
-        # Tab 6: UML Class Diagram
-        with tab6:
-            st.header("UML Class Diagram")
-            
-            if 'functions' in project_data and 'dependencies' in project_data:
-                try:
-                    # Generate HTML-based UML class diagram (tabular format)
-                    class_html, relationship_table = generate_class_diagram_html(
-                        project_data['functions'], 
-                        project_data['dependencies']
-                    )
-                    
-                    # Display the HTML class diagram
-                    if class_html and isinstance(class_html, str):
-                        st.components.v1.html(class_html, height=600, scrolling=True)
-                    else:
-                        st.info("Unable to generate class diagram with the current data.")
-                    
-                    # Generate the graph-based class diagram as fallback/alternative view
-                    result = generate_class_diagram(project_data['functions'], project_data['dependencies'])
-                    
-                    if isinstance(result, tuple) and len(result) == 2:
-                        class_diagram, graph_relationships = result
-                    else:
-                        # For backwards compatibility
-                        class_diagram = result
-                        graph_relationships = []
-                    
-                    # Add option to toggle between HTML and graph view
-                    show_graph_view = st.checkbox("Show alternative graph view", value=False)
-                    
-                    if show_graph_view and class_diagram and isinstance(class_diagram, go.Figure):
-                        st.plotly_chart(class_diagram, use_container_width=True)
-                    
-                    # Display class relationships table
-                    if relationship_table:
-                        st.subheader("Class Relationships")
-                        
-                        # Create a markdown table header
-                        table_md = """
-                        | Source Class | Relationship Type | Target Class | Description |
-                        |-------------|-------------------|--------------|-------------|
-                        """
-                        
-                        # Add each relationship row
-                        for row in relationship_table:
-                            table_md += row + "\n"
-                        
-                        st.markdown(table_md)
-                        
-                        # Also offer CSV export for the relationships
-                        if len(relationship_table) > 0:
-                            # Convert to DataFrame for CSV export
-                            rel_data = []
-                            for row in relationship_table:
-                                parts = row.split("|")
-                                if len(parts) >= 5:  # Should have 5 parts with empty first/last
-                                    rel_data.append({
-                                        "Source": parts[1].strip(),
-                                        "Relationship": parts[2].strip(),
-                                        "Target": parts[3].strip(),
-                                        "Description": parts[4].strip()
-                                    })
-                            
-                            if rel_data:
-                                rel_df = pd.DataFrame(rel_data)
-                                st.markdown(get_csv_download_link(rel_df, "class_relationships.csv", 
-                                           "💾 Download relationships as CSV"), unsafe_allow_html=True)
-                    
-                except Exception as e:
-                    st.error(f"Error generating class diagram: {str(e)}")
-                    st.info("Unable to generate class diagram due to an error in processing the data.")
-            else:
-                st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
-        
-        # Tab 7: Sequence Diagram
-        with tab7:
             st.header("Sequence Diagram")
             
             if 'apis' in project_data and 'functions' in project_data:
@@ -557,8 +461,8 @@ if uploaded_file is not None:
             else:
                 st.info("Insufficient data to generate sequence diagram. Ensure APIs and functions are available.")
         
-        # Tab 8: Functional Flow
-        with tab8:
+        # Tab 6: UML Class Diagram
+        with tab6:
             st.header("Functional Flow Diagram")
             
             if 'apis' in project_data and 'functions' in project_data and 'batch_processes' in project_data:
