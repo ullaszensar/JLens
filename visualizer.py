@@ -3,6 +3,8 @@ import plotly.express as px
 import networkx as nx
 import pandas as pd
 import random
+import re
+from plotly.subplots import make_subplots
 
 def visualize_project_structure(structure):
     """

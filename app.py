@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 import shutil
 import pandas as pd
+import plotly.express as px
 from java_parser import JavaProjectParser
 from visualizer import visualize_project_structure, visualize_api_calls, visualize_flow
 from utils import create_data_tables, get_file_content
@@ -299,20 +300,42 @@ if uploaded_file is not None:
             st.header("Functions/Methods")
             
             if analyze_functions and 'functions' in project_data and project_data['functions']:
-                # Create an expandable section for each class
-                classes = project_data['functions'].keys()
-                for class_name in classes:
-                    with st.expander(f"Class: {class_name}"):
-                        methods = project_data['functions'][class_name]
-                        if methods:
-                            for method in methods:
-                                st.markdown(f"**Method:** `{method['name']}`")
-                                st.markdown(f"**Return Type:** `{method['return_type']}`")
-                                st.markdown(f"**Parameters:** {', '.join([f'`{p}`' for p in method['parameters']])}")
-                                st.markdown(f"**File:** {method['file']}")
-                                st.markdown("---")
-                        else:
-                            st.info("No methods found in this class.")
+                # Create filter for class selection
+                classes = list(project_data['functions'].keys())
+                selected_class = st.selectbox("Select a class to view its methods:", ["All Classes"] + classes)
+                
+                # Prepare data for table view
+                all_methods = []
+                
+                if selected_class == "All Classes":
+                    # Show methods from all classes
+                    for class_name, methods in project_data['functions'].items():
+                        for method in methods:
+                            all_methods.append({
+                                'Class': class_name,
+                                'Method': method['name'],
+                                'Return Type': method['return_type'],
+                                'Parameters': ', '.join(method['parameters']) if method['parameters'] else 'None',
+                                'File': os.path.basename(method['file'])
+                            })
+                else:
+                    # Show methods from selected class only
+                    methods = project_data['functions'].get(selected_class, [])
+                    for method in methods:
+                        all_methods.append({
+                            'Class': selected_class,
+                            'Method': method['name'],
+                            'Return Type': method['return_type'],
+                            'Parameters': ', '.join(method['parameters']) if method['parameters'] else 'None',
+                            'File': os.path.basename(method['file'])
+                        })
+                
+                # Create and display the methods table
+                if all_methods:
+                    methods_df = pd.DataFrame(all_methods)
+                    st.dataframe(methods_df, use_container_width=True)
+                else:
+                    st.info(f"No methods found for {selected_class}.")
             else:
                 st.info("No functions were detected or function analysis was not selected.")
         
@@ -321,10 +344,32 @@ if uploaded_file is not None:
             st.header("Batch Processes")
             
             if analyze_batch and 'batch_processes' in project_data and project_data['batch_processes']:
-                # Display batch processes
+                # Display batch processes in a table
                 st.subheader("Detected Batch Processes")
-                batch_df = create_data_tables(project_data['batch_processes'])
-                st.dataframe(batch_df, use_container_width=True)
+                
+                # Create a more structured view of batch processes
+                batch_data = []
+                for batch in project_data['batch_processes']:
+                    batch_info = {
+                        'Type': batch.get('type', 'Unknown'),
+                        'Class': batch.get('class', 'N/A'),
+                        'Method': batch.get('method', 'N/A'),
+                        'Details': batch.get('details', ''),
+                        'File': os.path.basename(batch.get('file', 'Unknown'))
+                    }
+                    batch_data.append(batch_info)
+                
+                # Create and display the batch processes table
+                if batch_data:
+                    batch_df = pd.DataFrame(batch_data)
+                    st.dataframe(batch_df, use_container_width=True)
+                    
+                    # Add a pie chart showing types of batch processes
+                    st.subheader("Batch Process Types")
+                    fig = px.pie(batch_df, names='Type', title='Batch Process Types')
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No batch processes data available.")
             else:
                 st.info("No batch processes were detected or batch analysis was not selected.")
         
