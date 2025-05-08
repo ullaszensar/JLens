@@ -1,133 +1,74 @@
 # JLens - Java J2EE Project Analyzer
 
-JLens is a comprehensive tool for analyzing Java J2EE projects, providing visualizations, structure analysis, and UML diagrams to help you understand complex Java enterprise applications.
+JLens is a tool for analyzing Java J2EE projects, providing visualizations and structure analysis to help understand complex Java applications.
 
-![JLens - Zensar Diamond Team](generated-icon.png)
+## Quick Setup
+
+1. **Install dependencies:**
+   ```bash
+   pip install streamlit pandas plotly javalang networkx pygraphviz
+   ```
+
+2. **Run the application:**
+   ```bash
+   streamlit run app.py
+   ```
+
+3. **Access JLens** at http://localhost:5000
+
+## Project Structure
+
+```
+jlens/
+├── app.py                   # Main application
+├── java_parser.py           # Java code parser
+├── uml_class_diagram.py     # Class diagram generator
+├── utils.py                 # Utility functions
+├── visualizer.py            # Visualization tools
+└── .streamlit/              # Configuration
+```
 
 ## Features
 
-- **Project Structure Analysis**: Visualize project directory hierarchy, file types, and architectural layers
-- **API Endpoint Detection**: Identify REST endpoints, HTTP methods, and API relationships
-- **UML Class Structure**: View class relationships, attributes, and methods in tabular format
-- **Batch Process Analysis**: Detect scheduled jobs and batch processing components
-- **Sequence Diagrams**: Visualize API call sequences and flow
-- **Functional Flow**: Map the business logic flow across components
-
-## Installation
-
-### Prerequisites
-
-- Python 3.8+
-- pip (Python package manager)
-
-### Option 1: Clone and Install
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/jlens.git
-cd jlens
-
-# Create and activate a virtual environment (optional but recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Option 2: Direct Installation
-
-```bash
-# Install dependencies directly
-pip install streamlit pandas plotly javalang networkx pygraphviz
-```
-
-### Required Packages
-
-- `streamlit`: Web application framework
-- `pandas`: Data manipulation library
-- `plotly`: Interactive visualization library
-- `javalang`: Java source code parsing
-- `networkx`: Graph creation and analysis
-- `pygraphviz`: Graph visualization toolkit
-
-## Running JLens
-
-```bash
-# Start the JLens application
-streamlit run app.py
-```
-
-The application will be available at http://localhost:5000
+- Project structure visualization
+- API endpoint detection
+- Class structure and relationships
+- Batch process identification
+- Sequence diagrams
+- Functional flow mapping
 
 ## Usage
 
-1. **Upload Project**: Use the file uploader to select a ZIP file containing your Java J2EE project
-2. **Configure Analysis**: Select which aspects of the project to analyze
-3. **View Results**: Navigate through the tabs to explore different visualizations and insights
-4. **Export Data**: Use the download buttons to export data as CSV, JSON, or interactive charts
+1. Upload a Java J2EE project ZIP file
+2. Select analysis options
+3. View results in the different tabs:
+   - Project Structure
+   - APIs
+   - Functions
+   - Batch Processes
+   - Sequence Diagram
+   - Functional Flow
+4. Export data using the download buttons
 
-## Example Project Structure
+## Required Packages
 
-JLens works best with Java projects following standard J2EE conventions:
+- streamlit - Web application framework
+- pandas - Data handling
+- plotly - Visualization
+- javalang - Java parsing
+- networkx - Graph creation
+- pygraphviz - Graph visualization
 
-```
-project-root/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   ├── com/
-│   │   │   │   └── example/
-│   │   │   │       ├── controller/
-│   │   │   │       ├── service/
-│   │   │   │       ├── repository/
-│   │   │   │       ├── model/
-│   │   │   │       └── config/
-│   │   ├── resources/
-│   │   └── webapp/
-│   └── test/
-├── pom.xml
-└── ...
-```
+## Documentation
 
-## Project Understanding Capabilities
+- **SIMPLE_SETUP.md** - Quick installation guide
+- **USER_GUIDE.md** - Detailed usage instructions
+- **DEPLOYMENT.md** - Deployment options
 
-JLens can help you understand:
+## Support
 
-- Project architecture and organization
-- API endpoints and methods
-- Class dependencies and relationships
-- Data flow and service interactions
-- Batch processing components
+For more details, see the other documentation files or contact the development team.
 
-## Output Formats
+---
 
-- Interactive web visualizations
-- CSV/JSON data exports
-- Network graphs for relationships
-- Class and sequence diagrams
-- Tabular data representations
-
-## Troubleshooting
-
-- **Parse Errors**: Some complex Java files may generate parsing errors, but JLens will continue analyzing other files
-- **Memory Issues**: Large projects may require additional memory, use `--server.maxUploadSize=1024` to allow larger uploads
-- **Display Issues**: For better diagram visualization, use a modern browser with JavaScript enabled
-
-## Contributing
-
-Contributions to improve JLens are welcome. Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request with detailed changes
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-Developed by Zensar Diamond Team
-
-© 2025 JLens - All rights reserved
+© 2025 JLens - Zensar Diamond Team
