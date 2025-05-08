@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 import plotly.express as px
 import networkx as nx
+import numpy as np
 import pandas as pd
 import random
 import re
@@ -294,8 +295,8 @@ def visualize_flow(dependencies):
     # Create edge traces with different colors/styles by relationship type
     edge_traces = []
     
-    # Track which relationship types we've added for legend purposes
-    relationship_types = set()
+    # Track which relationship types we've already added to legend
+    added_relationship_types = set()
     
     for edge in G.edges(data=True):
         source, target, data = edge
@@ -307,7 +308,6 @@ def visualize_flow(dependencies):
         
         # Get relationship type
         relationship = data.get('relationship', 'uses')
-        relationship_types.add(relationship)
         
         # Choose style based on relationship type
         if relationship == 'extends':
@@ -323,6 +323,11 @@ def visualize_flow(dependencies):
             width = 1
             dash = None
         
+        # Only add to legend if we haven't seen this relationship type before
+        show_in_legend = relationship not in added_relationship_types
+        if show_in_legend:
+            added_relationship_types.add(relationship)
+        
         # Create custom arrow shapes using scatter with markers
         # Draw line
         edge_trace = go.Scatter(
@@ -332,13 +337,10 @@ def visualize_flow(dependencies):
             hoverinfo='text',
             text=f"{source.split('.')[-1]} {relationship} {target.split('.')[-1]}",
             mode='lines',
-            showlegend=relationship not in relationship_types,
+            showlegend=show_in_legend,
             name=relationship.capitalize())
         
         edge_traces.append(edge_trace)
-        
-        # Mark the relationship as added for legend purposes
-        relationship_types.discard(relationship)
     
     # Assign colors to packages for better grouping
     package_colors = {}
