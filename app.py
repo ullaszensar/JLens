@@ -71,6 +71,38 @@ if uploaded_file is not None:
         progress_bar.progress(60)
         status_text.text("Generating visualizations...")
         
+        # Add Project Summary Card first
+        st.header("Project Summary")
+        
+        # Get project summary data
+        summary = project_data.get('project_summary', {})
+        
+        # Create a grid layout for summary metrics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Total Files", summary.get('total_files', 0))
+            st.metric("Java Files", summary.get('java_files', 0))
+            
+        with col2:
+            st.metric("Total Classes", summary.get('total_classes', 0))
+            st.metric("Total Lines of Code", summary.get('total_lines', 0))
+            
+        with col3:
+            st.metric("APIs Detected", summary.get('apis_count', 0))
+            st.metric("Batch Jobs", summary.get('batch_jobs', 0))
+        
+        # Add libraries used in an expander
+        with st.expander("Libraries Used"):
+            libraries = summary.get('libraries_used', [])
+            if libraries:
+                st.write(", ".join(libraries))
+            else:
+                st.info("No libraries detected")
+        
+        # Add a separator
+        st.markdown("---")
+        
         # Create tabs for different analyses
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "Project Structure", 

@@ -40,6 +40,67 @@ class JavaProjectParser:
         # Generate file type statistics
         self._count_file_types()
         
+        # Count total lines of code
+        total_lines = 0
+        for file_path in self.java_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    total_lines += len(f.readlines())
+            except Exception:
+                pass  # Skip files that can't be read
+        
+        # Extract unique libraries used
+        libraries_used = set()
+        for file_path in self.java_files:
+            if file_path.endswith("pom.xml"):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        # Simple regex to extract artifact IDs from pom.xml
+                        import re
+                        artifacts = re.findall(r'<artifactId>(.*?)</artifactId>', content)
+                        for artifact in artifacts:
+                            if artifact and not artifact.startswith('${'):
+                                libraries_used.add(artifact)
+                except Exception:
+                    pass
+            elif file_path.endswith("build.gradle"):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        # Simple regex to extract dependencies from build.gradle
+                        import re
+                        deps = re.findall(r'implementation [\'"]([^:]+:[^:]+:[^\'"]+)[\'"]', content)
+                        deps.extend(re.findall(r'compile [\'"]([^:]+:[^:]+:[^\'"]+)[\'"]', content))
+                        for dep in deps:
+                            libraries_used.add(dep)
+                except Exception:
+                    pass
+        
+        # Count total number of classes
+        total_classes = len(self.functions.keys())
+        
+        # Count total number of files by extension
+        file_extensions = {}
+        for root, dirs, files in os.walk(self.project_path):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext:
+                    if ext not in file_extensions:
+                        file_extensions[ext] = 0
+                    file_extensions[ext] += 1
+        
+        # Collect project summary
+        project_summary = {
+            "total_files": sum(file_extensions.values()),
+            "java_files": len(self.java_files),
+            "total_classes": total_classes,
+            "total_lines": total_lines,
+            "batch_jobs": len(self.batch_processes),
+            "apis_count": len(self.apis),
+            "libraries_used": list(libraries_used)
+        }
+        
         # Collect results
         return {
             "structure": self.structure,
@@ -48,7 +109,8 @@ class JavaProjectParser:
             "batch_processes": self.batch_processes,
             "dependencies": self.dependencies,
             "java_files": [os.path.relpath(f, self.project_path) for f in self.java_files],
-            "file_types_count": self.file_types_count
+            "file_types_count": self.file_types_count,
+            "project_summary": project_summary
         }
         
     def _collect_java_files(self):
