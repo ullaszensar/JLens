@@ -41,10 +41,10 @@ with st.sidebar:
         
         # Analysis options
         st.header("Analysis Options")
-        analyze_apis = st.checkbox("Analyze APIs", value=True)
-        analyze_functions = st.checkbox("Analyze Functions", value=True)
-        analyze_batch = st.checkbox("Analyze Batch Processes", value=True)
-        analyze_flow = st.checkbox("Visualize Project Flow", value=True)
+        analyze_apis = st.checkbox("Analyze APIs", value=True, key="analyze_apis")
+        analyze_functions = st.checkbox("Analyze Functions", value=True, key="analyze_functions")
+        analyze_batch = st.checkbox("Analyze Batch Processes", value=True, key="analyze_batch")
+        analyze_flow = st.checkbox("Visualize Project Flow", value=True, key="analyze_flow")
 
 # Main content area
 if uploaded_file is not None:
@@ -140,6 +140,11 @@ if uploaded_file is not None:
                 # Display project structure as a tree
                 structure_fig = visualize_project_structure(project_data['structure'])
                 st.plotly_chart(structure_fig, use_container_width=True)
+                
+                # Add export options
+                st.markdown("#### Export Structure Visualization")
+                st.markdown(get_figure_download_link(structure_fig, "project_structure.png", 
+                            "💾 Download structure visualization as PNG"), unsafe_allow_html=True)
                 
                 # Also display the structure as a text tree for easier reading
                 st.subheader("Directory Text Tree")
@@ -297,10 +302,19 @@ if uploaded_file is not None:
                 api_df = create_data_tables(project_data['apis'])
                 st.dataframe(api_df, use_container_width=True)
                 
+                # Add export option for data
+                st.markdown("#### Export API Data")
+                st.markdown(get_csv_download_link(api_df, "api_endpoints.csv", "💾 Download API data as CSV"), unsafe_allow_html=True)
+                st.markdown(get_json_download_link(project_data['apis'], "api_endpoints.json", "💾 Download API data as JSON"), unsafe_allow_html=True)
+                
                 # Visualize API relationships
                 st.subheader("API Relationships")
                 api_fig = visualize_api_calls(project_data['apis'])
                 st.plotly_chart(api_fig, use_container_width=True)
+                
+                # Add export option for chart
+                st.markdown("#### Export API Visualization")
+                st.markdown(get_figure_download_link(api_fig, "api_relationships.png", "💾 Download chart as PNG"), unsafe_allow_html=True)
             else:
                 st.info("No APIs were detected or API analysis was not selected.")
         
@@ -343,6 +357,15 @@ if uploaded_file is not None:
                 if all_methods:
                     methods_df = pd.DataFrame(all_methods)
                     st.dataframe(methods_df, use_container_width=True)
+                    
+                    # Add export options
+                    st.markdown("#### Export Function Data")
+                    st.markdown(get_csv_download_link(methods_df, f"functions_{selected_class.replace(' ', '_')}.csv", 
+                                "💾 Download functions as CSV"), unsafe_allow_html=True)
+                    
+                    if selected_class == "All Classes":
+                        st.markdown(get_json_download_link(project_data['functions'], "all_functions.json", 
+                                    "💾 Download all functions as JSON"), unsafe_allow_html=True)
                 else:
                     st.info(f"No methods found for {selected_class}.")
             else:
@@ -377,6 +400,15 @@ if uploaded_file is not None:
                     st.subheader("Batch Process Types")
                     fig = px.pie(batch_df, names='Type', title='Batch Process Types')
                     st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add export options
+                    st.markdown("#### Export Batch Process Data")
+                    st.markdown(get_csv_download_link(batch_df, "batch_processes.csv", 
+                                "💾 Download batch processes as CSV"), unsafe_allow_html=True)
+                    st.markdown(get_json_download_link(project_data['batch_processes'], "batch_processes.json", 
+                                "💾 Download batch processes as JSON"), unsafe_allow_html=True)
+                    st.markdown(get_figure_download_link(fig, "batch_process_types.png", 
+                                "💾 Download chart as PNG"), unsafe_allow_html=True)
                 else:
                     st.info("No batch processes data available.")
             else:
@@ -389,12 +421,60 @@ if uploaded_file is not None:
             if analyze_flow and 'dependencies' in project_data:
                 flow_fig = visualize_flow(project_data['dependencies'])
                 st.plotly_chart(flow_fig, use_container_width=True)
+                
+                # Add export option
+                st.markdown("### Export Options")
+                st.markdown(get_figure_download_link(flow_fig, "project_flow.png", "💾 Download as PNG"), unsafe_allow_html=True)
             else:
                 st.info("Project flow visualization was not selected or no dependencies were detected.")
         
-        # Progress is complete
-        # File Explorer section has been removed as per user request
+        # Tab 6: Class Diagram
+        with tab6:
+            st.header("Class Diagram")
+            
+            if 'functions' in project_data and 'dependencies' in project_data:
+                class_diagram = generate_class_diagram(project_data['functions'], project_data['dependencies'])
+                st.plotly_chart(class_diagram, use_container_width=True)
+                
+                # Add export option
+                st.markdown("### Export Options")
+                st.markdown(get_figure_download_link(class_diagram, "class_diagram.png", "💾 Download as PNG"), unsafe_allow_html=True)
+            else:
+                st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
         
+        # Tab 7: Sequence Diagram
+        with tab7:
+            st.header("Sequence Diagram")
+            
+            if 'apis' in project_data and 'functions' in project_data:
+                sequence_diagram = generate_sequence_diagram(project_data['apis'], project_data['functions'])
+                st.plotly_chart(sequence_diagram, use_container_width=True)
+                
+                # Add export option
+                st.markdown("### Export Options")
+                st.markdown(get_figure_download_link(sequence_diagram, "sequence_diagram.png", "💾 Download as PNG"), unsafe_allow_html=True)
+            else:
+                st.info("Insufficient data to generate sequence diagram. Ensure APIs and functions are available.")
+        
+        # Tab 8: Functional Flow
+        with tab8:
+            st.header("Functional Flow Diagram")
+            
+            if 'apis' in project_data and 'functions' in project_data and 'batch_processes' in project_data:
+                functional_flow = generate_functional_flow(
+                    project_data.get('apis', []), 
+                    project_data.get('functions', {}), 
+                    project_data.get('batch_processes', [])
+                )
+                st.plotly_chart(functional_flow, use_container_width=True)
+                
+                # Add export option
+                st.markdown("### Export Options")
+                st.markdown(get_figure_download_link(functional_flow, "functional_flow.png", "💾 Download as PNG"), unsafe_allow_html=True)
+            else:
+                st.info("Insufficient data to generate functional flow diagram.")
+        
+        # Progress is complete
         progress_bar.progress(100)
         status_text.text("Analysis completed!")
         
