@@ -518,6 +518,12 @@ wheels = [
 ]
 
 [[package]]
+name = "pygraphviz"
+version = "1.14"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/ca/823d5c74a73d6b8b08e1f5aea12468ef334f0732c65cbb18df2a7f285c87/pygraphviz-1.14.tar.gz", hash = "sha256:c10df02377f4e39b00ae17c862f4ee7e5767317f1c6b2dfd04cea6acc7fc2bea", size = 106003 }
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -561,6 +567,7 @@ dependencies = [
     { name = "networkx" },
     { name = "pandas" },
     { name = "plotly" },
+    { name = "pygraphviz" },
     { name = "streamlit" },
 ]
 
@@ -570,6 +577,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "plotly", specifier = ">=6.0.1" },
+    { name = "pygraphviz", specifier = ">=1.14" },
     { name = "streamlit", specifier = ">=1.45.0" },
 ]
 
