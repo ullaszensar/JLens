@@ -24,6 +24,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Default values for analysis options
+analyze_apis = False
+analyze_functions = False
+analyze_batch = False
+analyze_flow = False
+
 # App title and description
 st.title("🔍 JLens - Zensar Diamond Team")
 st.subheader("Java J2EE Project Scanner & Analyzer")
@@ -140,12 +146,17 @@ if uploaded_file is not None:
                 st.subheader("Directory Tree View")
                 # Display project structure as a tree
                 structure_fig = visualize_project_structure(project_data['structure'])
-                st.plotly_chart(structure_fig, use_container_width=True)
                 
-                # Add export options
-                st.markdown("#### Export Structure Visualization")
-                st.markdown(get_figure_download_link(structure_fig, "project_structure.html", 
-                            "💾 Download structure visualization as interactive HTML"), unsafe_allow_html=True)
+                # Safety check before displaying
+                if structure_fig and isinstance(structure_fig, go.Figure):
+                    st.plotly_chart(structure_fig, use_container_width=True)
+                    
+                    # Add export options
+                    st.markdown("#### Export Structure Visualization")
+                    st.markdown(get_figure_download_link(structure_fig, "project_structure.html", 
+                                "💾 Download structure visualization as interactive HTML"), unsafe_allow_html=True)
+                else:
+                    st.info("Unable to generate project structure visualization with the current data.")
                 
                 # Also display the structure as a text tree for easier reading
                 st.subheader("Directory Text Tree")
@@ -405,16 +416,28 @@ if uploaded_file is not None:
                     # Add a pie chart showing types of batch processes
                     st.subheader("Batch Process Types")
                     fig = px.pie(batch_df, names='Type', title='Batch Process Types')
-                    st.plotly_chart(fig, use_container_width=True)
                     
-                    # Add export options
-                    st.markdown("#### Export Batch Process Data")
-                    st.markdown(get_csv_download_link(batch_df, "batch_processes.csv", 
-                                "💾 Download batch processes as CSV"), unsafe_allow_html=True)
-                    st.markdown(get_json_download_link(project_data['batch_processes'], "batch_processes.json", 
-                                "💾 Download batch processes as JSON"), unsafe_allow_html=True)
-                    st.markdown(get_figure_download_link(fig, "batch_process_types.html", 
-                                "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
+                    # Safety check before displaying
+                    if fig and isinstance(fig, go.Figure):
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Add export options
+                        st.markdown("#### Export Batch Process Data")
+                        st.markdown(get_csv_download_link(batch_df, "batch_processes.csv", 
+                                    "💾 Download batch processes as CSV"), unsafe_allow_html=True)
+                        st.markdown(get_json_download_link(project_data['batch_processes'], "batch_processes.json", 
+                                    "💾 Download batch processes as JSON"), unsafe_allow_html=True)
+                        st.markdown(get_figure_download_link(fig, "batch_process_types.html", 
+                                    "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
+                    else:
+                        st.info("Unable to generate batch process types chart with the current data.")
+                        
+                        # Still provide data export options even if chart fails
+                        st.markdown("#### Export Batch Process Data")
+                        st.markdown(get_csv_download_link(batch_df, "batch_processes.csv", 
+                                    "💾 Download batch processes as CSV"), unsafe_allow_html=True)
+                        st.markdown(get_json_download_link(project_data['batch_processes'], "batch_processes.json", 
+                                    "💾 Download batch processes as JSON"), unsafe_allow_html=True)
                 else:
                     st.info("No batch processes data available.")
             else:
@@ -426,11 +449,16 @@ if uploaded_file is not None:
             
             if analyze_flow and 'dependencies' in project_data:
                 flow_fig = visualize_flow(project_data['dependencies'])
-                st.plotly_chart(flow_fig, use_container_width=True)
                 
-                # Add export option
-                st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(flow_fig, "project_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                # Safety check before displaying
+                if flow_fig and isinstance(flow_fig, go.Figure):
+                    st.plotly_chart(flow_fig, use_container_width=True)
+                    
+                    # Add export option
+                    st.markdown("### Export Options")
+                    st.markdown(get_figure_download_link(flow_fig, "project_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                else:
+                    st.info("Unable to generate project flow visualization with the current data.")
             else:
                 st.info("Project flow visualization was not selected or no dependencies were detected.")
         
