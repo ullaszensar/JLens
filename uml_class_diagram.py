@@ -57,14 +57,15 @@ def generate_class_diagram_html(functions, dependencies):
     # Keep track of relationships for the table
     all_relationships = []
     
-    # Define background colors for different class types
+    # Define background colors for different class types (based on the example image)
     class_colors = {
-        'interface': '#D6EAF8',  # Light blue
-        'abstract': '#FCF3CF',  # Light yellow
-        'entity': '#D5F5E3',     # Light green
-        'controller': '#FADBD8',  # Light red
-        'service': '#E8DAEF',    # Light purple
-        'default': '#F2F3F4'     # Light gray
+        'interface': '#D6EAF8',       # Light blue
+        'abstract': '#F5F5F5',        # Light gray
+        'entity': '#F8D7DA',          # Light red (like Person in example)
+        'controller': '#FADBD8',      # Light red variant
+        'service': '#E8DAEF',         # Light purple
+        'default': '#FFF3CD',         # Light yellow (like Student/Professor in example)
+        'utility': '#D1E7DD'          # Light green (like Address in example)
     }
     
     # Build HTML for each class
@@ -136,26 +137,28 @@ def generate_class_diagram_html(functions, dependencies):
             color = class_colors['interface']
         elif 'Abstract' in short_name:
             color = class_colors['abstract']
-        elif 'Entity' in short_name or 'Model' in short_name:
+        elif 'Entity' in short_name or 'Model' in short_name or 'DTO' in short_name:
             color = class_colors['entity']
         elif 'Controller' in short_name:
             color = class_colors['controller']
         elif 'Service' in short_name:
             color = class_colors['service']
+        elif 'Util' in short_name or 'Helper' in short_name or 'Address' in short_name:
+            color = class_colors['utility']
         
         # Build HTML table for this class
         table_html = f'''
-        <table class="uml-class-table" style="border-collapse: collapse; border: 1px solid black; margin: 10px; float: left;">
+        <table class="uml-class-table">
             <tr>
-                <th style="background-color: {color}; text-align: center; padding: 5px; border: 1px solid black; font-weight: bold;">{short_name}</th>
+                <th class="uml-class-header" style="background-color: {color};">{short_name}</th>
             </tr>
             <tr>
-                <td style="border: 1px solid black; padding: 5px;">
+                <td class="uml-class-section" style="border-bottom: 1px solid black;">
                     {'<br>'.join(attributes) if attributes else '&nbsp;'}
                 </td>
             </tr>
             <tr>
-                <td style="border: 1px solid black; padding: 5px;">
+                <td class="uml-class-section">
                     {'<br>'.join(class_methods) if class_methods else '&nbsp;'}
                 </td>
             </tr>
@@ -228,14 +231,50 @@ def generate_class_diagram_html(functions, dependencies):
                     'description': f"{short_name} {rel_type.lower()} {used_short}"
                 })
     
+    # Create a legend for relationship types
+    legend_html = '''
+    <div style="margin-top: 20px; text-align: center; font-size: 0.9em;">
+        <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">→</span> Association</div>
+        <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◇→</span> Aggregation</div>
+        <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◆→</span> Composition</div>
+        <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">▶</span> Inheritance</div>
+        <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">--▶</span> Implementation</div>
+    </div>
+    '''
+    
     # Combine all class tables into a single HTML
     html = f'''
+    <style>
+        .uml-class-table {{
+            border-collapse: collapse;
+            border: 1px solid black;
+            margin: 12px;
+            float: left;
+            min-width: 180px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            font-family: Arial, sans-serif;
+        }}
+        .uml-class-header {{
+            text-align: center;
+            padding: 6px;
+            border: 1px solid black;
+            font-weight: bold;
+        }}
+        .uml-class-section {{
+            border: 1px solid black;
+            padding: 6px;
+            font-size: 0.9em;
+            text-align: left;
+        }}
+    </style>
+    <h3 style="text-align: center; margin-bottom: 20px;">UML Class Diagram</h3>
     <div style="display: flex; flex-wrap: wrap; justify-content: center;">
         {''.join(class_html)}
     </div>
     <div style="clear: both;"></div>
-    <div style="font-size: 0.9em; margin-top: 20px; text-align: center;">
-        UML Class Diagram - <b>JLens</b>
+    {legend_html}
+    <div style="font-size: 0.9em; margin-top: 10px; text-align: center;">
+        <b>JLens</b> - Zensar Diamond Team
     </div>
     '''
     
