@@ -464,20 +464,67 @@ if uploaded_file is not None:
         
         # Tab 6: Class Diagram
         with tab6:
-            st.header("Class Diagram")
+            st.header("UML Class Diagram")
             
             if 'functions' in project_data and 'dependencies' in project_data:
-                class_diagram = generate_class_diagram(project_data['functions'], project_data['dependencies'])
-                
-                # Safety check before displaying
-                if class_diagram and isinstance(class_diagram, go.Figure):
-                    st.plotly_chart(class_diagram, use_container_width=True)
+                try:
+                    # Now returns both the figure and relationship table
+                    result = generate_class_diagram(project_data['functions'], project_data['dependencies'])
                     
-                    # Add export option
-                    st.markdown("### Export Options")
-                    st.markdown(get_figure_download_link(class_diagram, "class_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
-                else:
-                    st.info("Unable to generate class diagram with the current data.")
+                    if isinstance(result, tuple) and len(result) == 2:
+                        class_diagram, relationship_table = result
+                    else:
+                        # For backwards compatibility
+                        class_diagram = result
+                        relationship_table = []
+                    
+                    # Safety check before displaying
+                    if class_diagram and isinstance(class_diagram, go.Figure):
+                        st.plotly_chart(class_diagram, use_container_width=True)
+                        
+                        # Add export option
+                        st.markdown("### Export Options")
+                        st.markdown(get_figure_download_link(class_diagram, "class_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
+                        
+                        # Display class relationships table
+                        if relationship_table:
+                            st.subheader("Class Relationships")
+                            
+                            # Create a markdown table header
+                            table_md = """
+                            | Source Class | Relationship Type | Target Class | Description |
+                            |-------------|-------------------|--------------|-------------|
+                            """
+                            
+                            # Add each relationship row
+                            for row in relationship_table:
+                                table_md += row + "\n"
+                            
+                            st.markdown(table_md)
+                            
+                            # Also offer CSV export for the relationships
+                            if len(relationship_table) > 0:
+                                # Convert to DataFrame for CSV export
+                                rel_data = []
+                                for row in relationship_table:
+                                    parts = row.split("|")
+                                    if len(parts) >= 5:  # Should have 5 parts with empty first/last
+                                        rel_data.append({
+                                            "Source": parts[1].strip(),
+                                            "Relationship": parts[2].strip(),
+                                            "Target": parts[3].strip(),
+                                            "Description": parts[4].strip()
+                                        })
+                                
+                                if rel_data:
+                                    rel_df = pd.DataFrame(rel_data)
+                                    st.markdown(get_csv_download_link(rel_df, "class_relationships.csv", 
+                                                "💾 Download relationships as CSV"), unsafe_allow_html=True)
+                    else:
+                        st.info("Unable to generate class diagram with the current data.")
+                except Exception as e:
+                    st.error(f"Error generating class diagram: {str(e)}")
+                    st.info("Unable to generate class diagram due to an error in processing the data.")
             else:
                 st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
         
