@@ -11,6 +11,7 @@ from visualizer import (
     visualize_project_structure, visualize_api_calls, visualize_flow,
     generate_class_diagram, generate_sequence_diagram, generate_functional_flow
 )
+from uml_class_diagram import generate_class_diagram_html
 from utils import (
     create_data_tables, get_file_content, get_csv_download_link,
     get_json_download_link, get_figure_download_link, format_tree_data_for_csv
