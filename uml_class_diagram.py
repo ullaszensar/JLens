@@ -9,6 +9,10 @@ def generate_class_diagram_html(functions, dependencies):
     Returns:
         tuple: (html, relationship_table) where html is the HTML for class diagrams and 
                relationship_table is a list of relationships for display in a table.
+               
+    Note:
+        This function returns a simplified HTML string that can be rendered directly
+        by Streamlit's st.markdown() with unsafe_allow_html=True.
     """
     if not functions or not dependencies:
         return "No class data available", []
@@ -242,41 +246,9 @@ def generate_class_diagram_html(functions, dependencies):
     </div>
     '''
     
-    # Combine all class tables into a single HTML
-    html = f'''
-    <style>
-        .uml-class-table {{
-            border-collapse: collapse;
-            border: 1px solid black;
-            margin: 12px;
-            float: left;
-            min-width: 180px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            font-family: Arial, sans-serif;
-        }}
-        .uml-class-header {{
-            text-align: center;
-            padding: 6px;
-            border: 1px solid black;
-            font-weight: bold;
-        }}
-        .uml-class-section {{
-            border: 1px solid black;
-            padding: 6px;
-            font-size: 0.9em;
-            text-align: left;
-        }}
-    </style>
-    <h3 style="text-align: center; margin-bottom: 20px;">UML Class Diagram</h3>
-    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-        {''.join(class_html)}
-    </div>
-    <div style="clear: both;"></div>
-    {legend_html}
-    <div style="font-size: 0.9em; margin-top: 10px; text-align: center;">
-        <b>JLens</b> - Zensar Diamond Team
-    </div>
-    '''
+    # Combine all class tables into a single simple HTML string
+    # Just return the tables, Streamlit will handle displaying them
+    html = ''.join(class_html)
     
     # Format relationships for the table
     relationship_table = []

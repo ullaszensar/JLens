@@ -347,9 +347,74 @@ if uploaded_file is not None:
                         project_data['dependencies']
                     )
                     
-                    # Display the HTML class diagram
+                    # Display the UML class diagram
                     if class_html and isinstance(class_html, str):
-                        st.markdown(class_html, unsafe_allow_html=True)
+                        # Extract just the needed parts - just the HTML tables, 
+                        # exclude all the page structure
+                        try:
+                            # Extract just the tables without all the surrounding HTML structure
+                            import re
+                            class_tables = re.findall(r'<table class="uml-class-table">(.*?)</table>', class_html, re.DOTALL)
+                            if class_tables:
+                                st.subheader("Class Diagram")
+                                # Construct simpler HTML with just the tables and minimal styling
+                                simple_html = '''
+                                <style>
+                                    .uml-class-table {
+                                        border-collapse: collapse;
+                                        border: 2px solid black;
+                                        margin: 12px;
+                                        display: inline-block;
+                                        min-width: 180px;
+                                        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+                                        font-family: Arial, sans-serif;
+                                        vertical-align: top;
+                                    }
+                                    .uml-class-header {
+                                        text-align: center;
+                                        padding: 8px;
+                                        border-bottom: 2px solid black;
+                                        font-weight: bold;
+                                        font-size: 14px;
+                                    }
+                                    .uml-class-section {
+                                        border-bottom: 1px solid black;
+                                        padding: 8px;
+                                        font-size: 13px;
+                                        text-align: left;
+                                    }
+                                    .diagram-wrapper {
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        justify-content: center;
+                                    }
+                                </style>
+                                <div class="diagram-wrapper">
+                                '''
+                                # Add each table
+                                for table in class_tables:
+                                    simple_html += f'<table class="uml-class-table">{table}</table>'
+                                
+                                simple_html += '</div>'
+                                
+                                # Display this simplified HTML
+                                st.markdown(simple_html, unsafe_allow_html=True)
+                                
+                                # Add legend
+                                legend_html = '''
+                                <div style="margin-top: 20px; text-align: center; font-size: 0.9em;">
+                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">→</span> Association</div>
+                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◇→</span> Aggregation</div>
+                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">◆→</span> Composition</div>
+                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">▶</span> Inheritance</div>
+                                    <div style="display: inline-block; margin: 0 10px;"><span style="font-weight: bold;">--▶</span> Implementation</div>
+                                </div>
+                                '''
+                                st.markdown(legend_html, unsafe_allow_html=True)
+                            else:
+                                st.warning("Failed to extract class tables from HTML")
+                        except Exception as e:
+                            st.error(f"Error processing UML HTML: {str(e)}")
                     else:
                         st.info("Unable to generate class diagram with the current data.")
                     
