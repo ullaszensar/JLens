@@ -56,8 +56,8 @@ def visualize_project_structure(structure):
     # Add edges
     G.add_edges_from(get_edges(structure))
     
-    # Use hierarchical layout for the graph
-    pos = nx.drawing.nx_agraph.graphviz_layout(G, prog='dot')
+    # Use spring layout instead of graphviz (which requires pygraphviz)
+    pos = nx.spring_layout(G, k=0.5, iterations=50, seed=42)
     
     # Create node traces
     edge_x = []
