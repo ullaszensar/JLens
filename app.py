@@ -17,18 +17,18 @@ from utils import (
 
 # Set page configuration
 st.set_page_config(
-    page_title="Jlens - Java J2EE Project Scanner",
+    page_title="JLens - Zensar Diamond Team",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # App title and description
-st.title("🔍 Jlens")
-st.subheader("Java J2EE Project Scanner")
+st.title("🔍 JLens - Zensar Diamond Team")
+st.subheader("Java J2EE Project Scanner & Analyzer")
 st.markdown("""
     Upload your Java J2EE project (ZIP file) to analyze its structure, APIs, functions, and batch processes.
-    Jlens will provide visualizations and insights into your project's architecture.
+    JLens will provide visualizations and insights into your project's architecture.
 """)
 
 # Sidebar for file upload and options
@@ -508,3 +508,16 @@ else:
         st.markdown("- Identify scheduled jobs")
         st.markdown("- Detect batch processing classes")
         st.markdown("- Map data flow in batch operations")
+
+# Add footer with Zensar Diamond Team branding
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; padding: 10px; margin-top: 30px;">
+        <p style="color: #666; font-size: 0.9em;">
+            © 2025 JLens - Developed by Zensar Diamond Team
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
