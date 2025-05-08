@@ -1,5 +1,9 @@
 import pandas as pd
 import os
+import base64
+import json
+from io import BytesIO
+import plotly.graph_objects as go
 
 def create_data_tables(data):
     """
@@ -132,3 +136,98 @@ def extract_package_structure(java_files):
             continue
     
     return package_structure
+
+def get_csv_download_link(df, filename="data.csv", text="Download CSV"):
+    """
+    Generate a link to download a DataFrame as a CSV file.
+    
+    Args:
+        df (pd.DataFrame): DataFrame to download.
+        filename (str): Name of the downloaded file.
+        text (str): Text to display for the download link.
+        
+    Returns:
+        str: HTML link for downloading the CSV.
+    """
+    if df.empty:
+        return ""
+    
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">{text}</a>'
+    return href
+
+def get_json_download_link(data, filename="data.json", text="Download JSON"):
+    """
+    Generate a link to download data as a JSON file.
+    
+    Args:
+        data: Data to convert to JSON and download.
+        filename (str): Name of the downloaded file.
+        text (str): Text to display for the download link.
+        
+    Returns:
+        str: HTML link for downloading the JSON.
+    """
+    if not data:
+        return ""
+    
+    json_str = json.dumps(data, indent=2)
+    b64 = base64.b64encode(json_str.encode()).decode()
+    href = f'<a href="data:file/json;base64,{b64}" download="{filename}">{text}</a>'
+    return href
+
+def get_figure_download_link(fig, filename="figure.png", text="Download Image"):
+    """
+    Generate a link to download a Plotly figure as a PNG image.
+    
+    Args:
+        fig (go.Figure): Plotly figure to download.
+        filename (str): Name of the downloaded file.
+        text (str): Text to display for the download link.
+        
+    Returns:
+        str: HTML link for downloading the image.
+    """
+    if not fig or not isinstance(fig, go.Figure):
+        return ""
+    
+    # Convert plot to PNG
+    buffer = BytesIO()
+    fig.write_image(buffer, format="png", width=1200, height=800)
+    buffer.seek(0)
+    img_data = buffer.read()
+    
+    # Convert to base64
+    b64 = base64.b64encode(img_data).decode()
+    href = f'<a href="data:image/png;base64,{b64}" download="{filename}">{text}</a>'
+    return href
+
+def format_tree_data_for_csv(structure):
+    """
+    Format hierarchical tree data for CSV export.
+    
+    Args:
+        structure (dict): Hierarchical structure data.
+        
+    Returns:
+        pd.DataFrame: Flattened data ready for CSV export.
+    """
+    rows = []
+    
+    def traverse(node, path=""):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                new_path = f"{path}/{key}" if path else key
+                traverse(value, new_path)
+        elif isinstance(node, list):
+            for item in node:
+                if isinstance(item, dict) or isinstance(item, list):
+                    traverse(item, path)
+                else:
+                    rows.append({"path": path, "item": item})
+        else:
+            rows.append({"path": path, "item": node})
+    
+    traverse(structure)
+    return pd.DataFrame(rows)

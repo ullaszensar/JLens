@@ -6,8 +6,14 @@ import shutil
 import pandas as pd
 import plotly.express as px
 from java_parser import JavaProjectParser
-from visualizer import visualize_project_structure, visualize_api_calls, visualize_flow
-from utils import create_data_tables, get_file_content
+from visualizer import (
+    visualize_project_structure, visualize_api_calls, visualize_flow,
+    generate_class_diagram, generate_sequence_diagram, generate_functional_flow
+)
+from utils import (
+    create_data_tables, get_file_content, get_csv_download_link,
+    get_json_download_link, get_figure_download_link, format_tree_data_for_csv
+)
 
 # Set page configuration
 st.set_page_config(
@@ -105,12 +111,15 @@ if uploaded_file is not None:
         st.markdown("---")
         
         # Create tabs for different analyses
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
             "Project Structure", 
             "APIs", 
             "Functions", 
             "Batch Processes",
-            "Project Flow"
+            "Project Flow",
+            "Class Diagram",
+            "Sequence Diagram",
+            "Functional Flow"
         ])
         
         # Tab 1: Project Structure
