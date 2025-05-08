@@ -143,8 +143,8 @@ if uploaded_file is not None:
                 
                 # Add export options
                 st.markdown("#### Export Structure Visualization")
-                st.markdown(get_figure_download_link(structure_fig, "project_structure.png", 
-                            "💾 Download structure visualization as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(structure_fig, "project_structure.html", 
+                            "💾 Download structure visualization as interactive HTML"), unsafe_allow_html=True)
                 
                 # Also display the structure as a text tree for easier reading
                 st.subheader("Directory Text Tree")
@@ -314,7 +314,7 @@ if uploaded_file is not None:
                 
                 # Add export option for chart
                 st.markdown("#### Export API Visualization")
-                st.markdown(get_figure_download_link(api_fig, "api_relationships.png", "💾 Download chart as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(api_fig, "api_relationships.html", "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("No APIs were detected or API analysis was not selected.")
         
@@ -407,8 +407,8 @@ if uploaded_file is not None:
                                 "💾 Download batch processes as CSV"), unsafe_allow_html=True)
                     st.markdown(get_json_download_link(project_data['batch_processes'], "batch_processes.json", 
                                 "💾 Download batch processes as JSON"), unsafe_allow_html=True)
-                    st.markdown(get_figure_download_link(fig, "batch_process_types.png", 
-                                "💾 Download chart as PNG"), unsafe_allow_html=True)
+                    st.markdown(get_figure_download_link(fig, "batch_process_types.html", 
+                                "💾 Download chart as interactive HTML"), unsafe_allow_html=True)
                 else:
                     st.info("No batch processes data available.")
             else:
@@ -424,7 +424,7 @@ if uploaded_file is not None:
                 
                 # Add export option
                 st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(flow_fig, "project_flow.png", "💾 Download as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(flow_fig, "project_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("Project flow visualization was not selected or no dependencies were detected.")
         
@@ -438,7 +438,7 @@ if uploaded_file is not None:
                 
                 # Add export option
                 st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(class_diagram, "class_diagram.png", "💾 Download as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(class_diagram, "class_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("Insufficient data to generate class diagram. Ensure both functions and dependencies are available.")
         
@@ -452,7 +452,7 @@ if uploaded_file is not None:
                 
                 # Add export option
                 st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(sequence_diagram, "sequence_diagram.png", "💾 Download as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(sequence_diagram, "sequence_diagram.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("Insufficient data to generate sequence diagram. Ensure APIs and functions are available.")
         
@@ -470,7 +470,7 @@ if uploaded_file is not None:
                 
                 # Add export option
                 st.markdown("### Export Options")
-                st.markdown(get_figure_download_link(functional_flow, "functional_flow.png", "💾 Download as PNG"), unsafe_allow_html=True)
+                st.markdown(get_figure_download_link(functional_flow, "functional_flow.html", "💾 Download as interactive HTML"), unsafe_allow_html=True)
             else:
                 st.info("Insufficient data to generate functional flow diagram.")
         

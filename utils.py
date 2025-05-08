@@ -179,7 +179,7 @@ def get_json_download_link(data, filename="data.json", text="Download JSON"):
 
 def get_figure_download_link(fig, filename="figure.png", text="Download Image"):
     """
-    Generate a link to download a Plotly figure as a PNG image.
+    Generate a link to download a Plotly figure as HTML.
     
     Args:
         fig (go.Figure): Plotly figure to download.
@@ -187,20 +187,22 @@ def get_figure_download_link(fig, filename="figure.png", text="Download Image"):
         text (str): Text to display for the download link.
         
     Returns:
-        str: HTML link for downloading the image.
+        str: HTML link for downloading the interactive figure as HTML.
     """
     if not fig or not isinstance(fig, go.Figure):
         return ""
     
-    # Convert plot to PNG
+    # Convert plot to HTML
     buffer = BytesIO()
-    fig.write_image(buffer, format="png", width=1200, height=800)
+    html_str = fig.to_html(include_plotlyjs='cdn')
+    buffer.write(html_str.encode())
     buffer.seek(0)
-    img_data = buffer.read()
+    html_data = buffer.read()
     
     # Convert to base64
-    b64 = base64.b64encode(img_data).decode()
-    href = f'<a href="data:image/png;base64,{b64}" download="{filename}">{text}</a>'
+    b64 = base64.b64encode(html_data).decode()
+    html_filename = filename.replace(".png", ".html")
+    href = f'<a href="data:text/html;base64,{b64}" download="{html_filename}">{text}</a>'
     return href
 
 def format_tree_data_for_csv(structure):
