@@ -347,32 +347,139 @@ if uploaded_file is not None:
                         project_data['dependencies']
                     )
                     
-                    # Instead of using HTML for UML diagrams, let's display the example diagram image
-                    st.subheader("UML Class Diagram")
+                    # Skip UML HTML diagram since it's not rendering correctly
+                    # Focus on table-based class information
+                    st.subheader("Class Structure")
                     
-                    try:
-                        # Show a disclaimer
-                        st.info("Displaying class diagram for the Java application. Each box represents a class with its attributes and methods.")
+                    # Add a new table to display class attributes and methods
+                    if 'functions' in project_data and project_data['functions']:
+                        # Create a table with class structure information
+                        classes = list(project_data['functions'].keys())
                         
-                        # Display the UML example image that was provided
-                        if os.path.exists("attached_assets/class-diagram-example.png"):
-                            st.image("attached_assets/class-diagram-example.png", 
-                                     caption="UML Class Diagram Example", 
-                                     use_column_width=True)
+                        # Create dropdown to select a class
+                        selected_class_structure = st.selectbox(
+                            "Select a class to view structure:", 
+                            ["All Classes"] + classes,
+                            key="class_structure_selector"  # Unique key to avoid conflicts
+                        )
                         
-                        # Add legend for relationships
-                        st.markdown("""
-                        **Relationship Legend:**
-                        * → : Association - One class uses another
-                        * ◇→ : Aggregation - One class contains another ("has a")
-                        * ◆→ : Composition - One class owns another (strong "has a")
-                        * ▶ : Inheritance - One class extends another ("is a")
-                        * --▶ : Implementation - One class implements an interface
-                        """)
-                        
-                    except Exception as e:
-                        st.error(f"Error displaying class diagram: {str(e)}")
-                        st.info("Unable to generate class diagram due to an error in processing the data.")
+                        # For the selected class, display attributes and methods
+                        if selected_class_structure != "All Classes":
+                            # Get class data
+                            if selected_class_structure in project_data['functions']:
+                                methods = project_data['functions'][selected_class_structure]
+                                
+                                # Separate attributes and methods
+                                attributes = []
+                                class_methods = []
+                                
+                                for method in methods:
+                                    method_name = method.get('name', '')
+                                    return_type = method.get('return_type', '')
+                                    params = method.get('parameters', [])
+                                    
+                                    # Add visibility prefix based on Java conventions
+                                    visibility = 'public'  # Default to public
+                                    if method_name.startswith('_'):
+                                        visibility = 'private'  # Private
+                                    elif method_name.startswith('protected'):
+                                        visibility = 'protected'  # Protected
+                                    
+                                    # Determine if this is a field/attribute (no parameters, not void)
+                                    if not params and method_name not in ['hashCode', 'toString', 'equals', 'main']:
+                                        if (not method_name.startswith('get') and 
+                                            not method_name.startswith('set') and 
+                                            not method_name.startswith('is')):
+                                            attributes.append({
+                                                'Name': method_name,
+                                                'Type': return_type,
+                                                'Visibility': visibility
+                                            })
+                                        else:
+                                            # This could be a getter/setter, let's extract the field name
+                                            if method_name.startswith('get') or method_name.startswith('set'):
+                                                field_name = method_name[3:]
+                                                field_name = field_name[0].lower() + field_name[1:]
+                                                attributes.append({
+                                                    'Name': field_name,
+                                                    'Type': return_type,
+                                                    'Visibility': visibility
+                                                })
+                                            elif method_name.startswith('is'):
+                                                field_name = method_name[2:]
+                                                field_name = field_name[0].lower() + field_name[1:]
+                                                attributes.append({
+                                                    'Name': field_name,
+                                                    'Type': 'boolean',
+                                                    'Visibility': visibility
+                                                })
+                                    else:
+                                        # This is a method
+                                        class_methods.append({
+                                            'Name': method_name,
+                                            'Return Type': return_type,
+                                            'Parameters': ', '.join(params) if params else 'None',
+                                            'Visibility': visibility
+                                        })
+                                
+                                # Display attributes table
+                                if attributes:
+                                    st.write("**Class Attributes:**")
+                                    attributes_df = pd.DataFrame(attributes)
+                                    st.dataframe(attributes_df, use_container_width=True)
+                                else:
+                                    st.info("No attributes found for this class.")
+                                
+                                # Display methods table
+                                if class_methods:
+                                    st.write("**Class Methods:**")
+                                    methods_df = pd.DataFrame(class_methods)
+                                    st.dataframe(methods_df, use_container_width=True)
+                                else:
+                                    st.info("No methods found for this class.")
+                            else:
+                                st.info(f"Class '{selected_class_structure}' not found in the data.")
+                        else:
+                            # For "All Classes" option, just show a summary
+                            st.info("Select a specific class to view its structure details.")
+                            
+                            # Show class count by type
+                            class_types = {
+                                'Controller': 0,
+                                'Service': 0,
+                                'Entity': 0,
+                                'Repository': 0,
+                                'Util': 0,
+                                'Configuration': 0,
+                                'Other': 0
+                            }
+                            
+                            for cls in classes:
+                                short_name = cls.split('.')[-1]
+                                if 'Controller' in short_name:
+                                    class_types['Controller'] += 1
+                                elif 'Service' in short_name:
+                                    class_types['Service'] += 1
+                                elif 'Entity' in short_name or 'Model' in short_name or 'DTO' in short_name:
+                                    class_types['Entity'] += 1
+                                elif 'Repository' in short_name or 'DAO' in short_name:
+                                    class_types['Repository'] += 1
+                                elif 'Util' in short_name or 'Helper' in short_name:
+                                    class_types['Util'] += 1
+                                elif 'Config' in short_name:
+                                    class_types['Configuration'] += 1
+                                else:
+                                    class_types['Other'] += 1
+                            
+                            # Display class type summary
+                            class_type_df = pd.DataFrame(
+                                [{'Type': k, 'Count': v} for k, v in class_types.items() if v > 0]
+                            )
+                            if not class_type_df.empty:
+                                st.write("**Class Types Summary:**")
+                                st.dataframe(class_type_df, use_container_width=True)
+                    else:
+                        st.info("No class information available.")
                     
                     # Display class relationships as a table
                     if relationship_table:
