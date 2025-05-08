@@ -115,8 +115,7 @@ def visualize_project_structure(structure):
     # Create figure
     fig = go.Figure(data=[edge_trace, node_trace],
                  layout=go.Layout(
-                    title='Project Structure',
-                    titlefont_size=16,
+                    title=dict(text='Project Structure', font=dict(size=16)),
                     showlegend=False,
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
@@ -221,8 +220,7 @@ def visualize_api_calls(apis):
     # Create figure
     fig = go.Figure(data=[edge_trace, node_trace],
                  layout=go.Layout(
-                    title='API Relationships',
-                    titlefont_size=16,
+                    title=dict(text='API Relationships', font=dict(size=16)),
                     showlegend=False,
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
@@ -323,8 +321,7 @@ def visualize_flow(dependencies):
     # Create figure with all traces
     fig = go.Figure(data=[edge_trace] + node_traces,
                  layout=go.Layout(
-                    title='Project Flow and Dependencies',
-                    titlefont_size=16,
+                    title=dict(text='Project Flow and Dependencies', font=dict(size=16)),
                     showlegend=True,
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
